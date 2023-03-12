@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- Vue.js -->
+    <link rel="stylesheet" type="text/css" href="css/googlefonts.css" />
+    <link rel="stylesheet" type="text/css" href="css/materialdesignicons.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/vuetify.min.css" />
+    <!-- HackBar -->
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <v-app>
+        <v-app-bar app dense flat>
+          <v-toolbar-items>
+            <v-btn text @click="load()">Load</v-btn>
+            <v-btn text @click="split()">Split</v-btn>
+            <v-btn text @click="execute()">Execute</v-btn>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  Test
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>Common paths</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="controlTest('start', 'scripts/test/paths.js', { payloadsPath: chrome.runtime.getURL('payloads/paths.txt'), againstWebRoot: true })">
+                      <v-list-item-title>Against web root directory</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="controlTest('start', 'scripts/test/paths.js', { payloadsPath: chrome.runtime.getURL('payloads/paths.txt'), againstWebRoot: false })">
+                      <v-list-item-title>Against current directory</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+              </v-list>
+            </v-menu>
+            <v-divider inset vertical></v-divider>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  SQLi
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>MySQL</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.MySQL.dumpDatabases')">
+                      <v-list-item-title>Dump all database names</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.MySQL.dumpTables')">
+                      <v-list-item-title>Dump tables from database</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.MySQL.dumpColumns')">
+                      <v-list-item-title>Dump columns from database</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.MySQL.dumpCurrentQueries', true)">
+                      <v-list-item-title>Dump current queries payload</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.MySQL.dumpInOneShot', true)">
+                      <v-list-item-title>Dump in one shot payload</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.MySQL.unionSelect', false)">
+                      <v-list-item-title>Union select statement</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.MySQL.errorBased', true)">
+                      <v-list-item-title>Error-based injection statement</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>UDF</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Payload.SQLi.UDF.linux_x86')">
+                      <v-list-item-title>Linux - x86</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.UDF.linux_x64')">
+                      <v-list-item-title>Linux - x64</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.UDF.windows_x86')">
+                      <v-list-item-title>Windows - x86</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.UDF.windows_x64')">
+                      <v-list-item-title>Windows - x64</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>PostgreSQL</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.PostgreSQL.dumpDatabases')">
+                      <v-list-item-title>Dump all database names</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.PostgreSQL.dumpTables')">
+                      <v-list-item-title>Dump tables from database</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.PostgreSQL.dumpColumns')">
+                      <v-list-item-title>Dump columns from database</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.PostgreSQL.unionSelect', false)">
+                      <v-list-item-title>Union select statement</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SQLi.PostgreSQL.errorBased', true)">
+                      <v-list-item-title>Error-based injection statement</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>SQLite</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.SQLite.dumpTables')">
+                      <v-list-item-title>Dump tables from database</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.SQLite.dumpColumns')">
+                      <v-list-item-title>Dump columns from database (also with table name)</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="sqlInjectionPrompt('Payload.SQLi.SQLite.unionSelect', false)">
+                      <v-list-item-title>Union select statement</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-list-item @click="applyFunction('Payload.SQLi.polyglot', true)">
+                  <v-list-item-title>Polyglot</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Payload.SQLi.spaceToComment')">
+                  <v-list-item-title>Space to Inline comment</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  XSS
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-list-item @click="applyFunction('Payload.XSS.polyglot', true)">
+                  <v-list-item-title>Polyglot</v-list-item-title>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.Html.encode')">
+                  <v-list-item-title>Html encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Html.decode')">
+                  <v-list-item-title>Html decode</v-list-item-title>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.CharCode.encode')">
+                  <v-list-item-title>String.fromCharCode encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.CharCode.decode')">
+                  <v-list-item-title>String.fromCharCode decode</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  LFI
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-list-item @click="applyFunction('Payload.LFI.phpWrapper', true)">
+                  <v-list-item-title>PHP wrapper</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Payload.LFI.phpWrapperBase64', true)">
+                  <v-list-item-title>PHP wrapper - Base64</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Payload.LFI.dataWrapper', true)">
+                  <v-list-item-title>Data wrapper</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Payload.LFI.dataWrapperBase64', true)">
+                  <v-list-item-title>Data wrapper - Base64</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  SSTI
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>Jinja2 (Python)</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Jinja2.tuple2Class', true)">
+                      <v-list-item-title>Access all class by tuple</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Jinja2.string2Class', true)">
+                      <v-list-item-title>Access all class by string</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Jinja2.list2Class', true)">
+                      <v-list-item-title>Access all class by list</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Jinja2.method2Global', true)">
+                      <v-list-item-title>Access global variables by method</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Jinja2.flaskRCE', true)">
+                      <v-list-item-title>Flask RCE</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>Java</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Java.commonRCE', true)">
+                      <v-list-item-title>Common Java Template RCE</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Payload.SSTI.Java.thymeleafRCE', true)">
+                      <v-list-item-title>Thymeleaf RCE</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  Encoding
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-list-item @click="applyFunction('Encode.URL.encode')">
+                  <v-list-item-title>URL encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.URL.decode')">
+                  <v-list-item-title>URL decode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.URL.fullencode')">
+                  <v-list-item-title>URL fullencode (ASCII)</v-list-item-title>
+                </v-list-item>
+                <!-- <v-list-item @click="applyFunction('Encode.URL.decodePlus')">
+                  <v-list-item-title>URL decode (+ => space)</v-list-item-title>
+                </v-list-item> -->
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.Base64.encode')">
+                  <v-list-item-title>Base64 encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Base64.decode')">
+                  <v-list-item-title>Base64 decode</v-list-item-title>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.Hexadecimal.encode')">
+                  <v-list-item-title>Hexadecimal encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Hexadecimal.decode')">
+                  <v-list-item-title>Hexadecimal decode</v-list-item-title>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.Unicode.encode')">
+                  <v-list-item-title>Unicode encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Unicode.decode')">
+                  <v-list-item-title>Unicode decode</v-list-item-title>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.Base32.encode')">
+                  <v-list-item-title>Base32 encode</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Base32.decode')">
+                  <v-list-item-title>Base32 decode</v-list-item-title>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item @click="applyFunction('Encode.Str.strlen')">
+                  <v-list-item-title>strlen</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Rot13.rot13')">
+                  <v-list-item-title>rot13</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Encode.Trim.trim')">
+                  <v-list-item-title>trim</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  Hashing
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-list-item @click="applyFunction('Hash.MD5.digest')">
+                  <v-list-item-title>MD5</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Hash.SHA1.digest')">
+                  <v-list-item-title>SHA1</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Hash.SHA256.digest')">
+                  <v-list-item-title>SHA256</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="applyFunction('Hash.SHA512.digest')">
+                  <v-list-item-title>SHA512</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  SHELL
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>SUID</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Shell.SUID.suid1')">
+                      <v-list-item-title>SUID-1</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Shell.SUID.suid2')">
+                      <v-list-item-title>SUID-2</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Shell.SUID.suid3')">
+                      <v-list-item-title>SUID-3</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Shell.SUID.find')">
+                      <v-list-item-title>SUID-find</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>RevShell</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Shell.revshell.bashRev')">
+                      <v-list-item-title>bashRev</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Shell.revshell.javaRev')">
+                      <v-list-item-title>javaRev</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-list-item @click="applyFunction('Shell.Interactive.pyInteractive')">
+                  <v-list-item-title>Python Interactive terminal</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  Calc
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>10->Other</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Calc.calc.decimalToHex')">
+                      <v-list-item-title>10->16</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Calc.calc.decimalToOctal')">
+                      <v-list-item-title>10->8</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Calc.calc.decimalToBinary')">
+                      <v-list-item-title>10-2</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+                <v-menu offset-x open-on-hover>
+                  <template v-slot:activator="{ on }">
+                    <v-list-item v-on="on" @click.stop>
+                      <v-list-item-title>Other->10</v-list-item-title>
+                      <v-list-item-action class="justify-end">
+                        <v-icon small>mdi-menu-right</v-icon>
+                      </v-list-item-action>
+                    </v-list-item>
+                  </template>
+                  <v-list dense>
+                    <v-list-item @click="applyFunction('Calc.calc.hexToDecimal')">
+                      <v-list-item-title>16->10</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Calc.calc.octalToDecimal')">
+                      <v-list-item-title>8->10</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="applyFunction('Calc.calc.binaryToDecimal')">
+                      <v-list-item-title>2->10</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+              </v-list>
+            </v-menu>
+          </v-toolbar-items>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+            <v-menu offset-y>
+              <template v-slot:activator="{ on }">
+                <v-btn text v-on="on">
+                  Theme
+                  <v-icon small right>mdi-menu-down</v-icon>
+                </v-btn>
+              </template>
+              <v-list dense>
+                <v-list-item @click="enableDarkTheme(false)">
+                  <v-list-item-title>Light</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="enableDarkTheme(true)">
+                  <v-list-item-title>Dark</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </v-toolbar-items>
+        </v-app-bar>
+        <v-main>
+          <v-container fluid px-4>
+            <v-textarea label="URL" rows="1" ref="url" auto-grow v-model="request.url" @focus="onFocus($event)" @keydown.stop></v-textarea>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-layout align-center>
+                  <v-switch label="Enable POST" v-model="request.body.enabled"></v-switch>
+                  <v-spacer></v-spacer>
+                  <v-select class="pt-2" v-model="request.body.enctype" :items="supportedEnctype()" label="enctype" v-show="request.body.enabled" dense offset-y></v-select>
+                </v-layout>
+                <v-textarea label="Body" rows="1" auto-grow v-show="request.body.enabled" v-model="request.body.content" @focus="onFocus($event)" @keydown.stop></v-textarea>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-btn id="add-header-button" @click="addHeader()">Add Header</v-btn>
+                <v-layout class="header-settings" align-center v-for="(header, index) in request.headers" :key="index">
+                  <v-checkbox v-model="header.enabled"></v-checkbox>
+                  <v-combobox dense class="px-1 pt-2" label="Name" v-model="header.name" :items="commonRequestHeaders()" @focus="onFocus($event)" :menu-props='{ "maxHeight": 200 }'></v-combobox>
+                  <v-text-field class="px-1" label="Value" v-model="header.value" @focus="onFocus($event)" @keydown.stop></v-text-field>
+                  <v-btn icon text @click="deleteHeader(index)">
+                    <v-icon small>mdi-close</v-icon>
+                  </v-btn>
+                </v-layout>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-main>
+        <v-dialog max-width="580" v-model="reloadDialog">
+          <v-card>
+            <v-card-title class="headline">
+              Unable to fetch request information
+            </v-card-title>
+            <v-card-text class="body-1">
+              After installing extension, it is required to reload the tab for recording the request.<br><br>
+
+              Note that the extension cannot record sensitive requests. Please visit <a href="https://developer.chrome.com/extensions/webRequest" target="blank">here</a> for more information.
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="reloadDialog = false">OK</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-dialog max-width="580" persistent eager v-model="sqlInjectionDialog.show">
+          <v-form @submit.prevent="sqlInjectionDialog.show = false; applyFunction(sqlInjectionDialog.func, true, sqlInjectionDialog)" v-model="sqlInjectionDialog.valid">
+            <v-card>
+              <v-card-title class="headline">
+                SQL Injection
+              </v-card-title>
+              <v-card-text class="body-1">
+                <p v-if="sqlInjectionDialog.positionRequired">The number of columns must be <strong>larger than</strong> or <strong>equal to</strong> output position.</p>
+                <p v-else>The number of columns to use in UNION SELECT statement.</p>
+                <v-row>
+                  <v-col>
+                    <v-text-field type="number" min="1" label="The number of columns" ref="sqlInjectionInput" :rules="[v => /^[1-9][0-9]{0,}$/.test(v) || 'Invalid value']" v-model="sqlInjectionDialog.columns" @keydown.stop required></v-text-field>
+                  </v-col>
+                  <v-col v-show="sqlInjectionDialog.positionRequired">
+                    <v-text-field type="number" min="1" :max="sqlInjectionDialog.columns" label="Output position" :rules="[v => /^[1-9][0-9]{0,}$/.test(v) || 'Invalid value']" v-model="sqlInjectionDialog.position" @keydown.stop required></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn text @click="sqlInjectionDialog.show = false">Cancel</v-btn>
+                <v-btn text type="submit" :disabled="!sqlInjectionDialog.valid">OK</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-form>
+        </v-dialog>
+        <v-dialog max-width="580" persistent v-model="testProgressDialog.show">
+          <v-card>
+            <v-card-title class="headline">
+              Test Progress
+            </v-card-title>
+            <v-card-text class="body-1">
+              <p v-if="!testProgressDialog.status">Waiting response from test script...</p>
+              <p v-else>Status: {{testProgressDialog.status}}</p>
+              <v-progress-linear v-if="!testProgressDialog.result" :indeterminate="!testProgressDialog.percentage" :value="testProgressDialog.percentage"></v-progress-linear>
+              <v-data-table v-if="testProgressDialog.result" :headers="testProgressDialog.result.header" :items="testProgressDialog.result.data"></v-data-table>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text v-if="!testProgressDialog.result" @click="controlTest('toggle')">Pause/Resume</v-btn>
+              <v-btn text v-if="!testProgressDialog.result" @click="controlTest('stop')">Stop</v-btn>
+              <v-btn text v-if="testProgressDialog.result" @click="testProgressDialog.show = false">Close</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+        <v-snackbar v-model="snackbar.show" color="error" timeout="3000" bottom>
+          {{ snackbar.text }}
+          <v-btn @click="snackbar.show = false" dark text>Close</v-btn>
+        </v-snackbar>
+      </v-app>
+    </div>
+
+    <!-- Vue.js Libraries -->
+    <script src="scripts/vue.js/vue.min.js" type="text/javascript"></script>
+    <script src="scripts/vue.js/vuetify.min.js" type="text/javascript"></script>
+    <!-- crypto-js Libraries -->
+    <script src="scripts/crypto-js/core.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/x64-core.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/enc-base64.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/enc-hex.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/enc-latin1.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/enc-utf8.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/md5.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/sha1.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/sha256.min.js" type="text/javascript"></script>
+    <script src="scripts/crypto-js/sha512.min.js" type="text/javascript"></script>
+    <!-- HackBar -->
+    <script src="scripts/lib/payload.js" type="text/javascript"></script>
+    <script src="scripts/lib/encode.js" type="text/javascript"></script>
+    <script src="scripts/lib/shell.js" type="text/javascript"></script>
+    <script src="scripts/lib/calc.js" type="text/javascript"></script>
+    <script src="scripts/lib/hash.js" type="text/javascript"></script>
+    <script src="scripts/index.js" type="text/javascript"></script>
+  </body>
+</html>
